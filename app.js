@@ -13,7 +13,7 @@ app.use(Express.json({ limit: '100mb' }));
 app.use(Express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.send('Connected to Apex-Auto-Mods API');
+  res.send('Connected to Apex-Auto-Mods Server');
 });
 
 //ROUTES
