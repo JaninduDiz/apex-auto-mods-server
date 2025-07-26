@@ -13,7 +13,20 @@ app.use(Express.json({ limit: '100mb' }));
 app.use(Express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.send('Connected to Apex-Auto-Mods Server');
+  res.json({
+    message: '🚗 Welcome to Apex Auto Mods API Server!',
+    status: 'Online ✅',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      auth: '/api/v1/auth',
+      vehicles: '/api/v1/vehicles',
+      builds: '/api/v1/builds',
+      services: '/api/v1/services'
+    },
+    documentation: 'API is ready to serve your auto modification needs!',
+    developer: 'Janindu Dissanayake'
+  });
 });
 
 //ROUTES
