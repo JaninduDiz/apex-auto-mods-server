@@ -1,25 +1,42 @@
-import Build from '../models/build.model.js';
+import * as buildService from '../services/build.service.js';
 
 // Create a new build
 export const createBuild = async (req, res) => {
     try {
-        const { carModel, color, selectedParts } = req.body;
-        const userId = req.user.id
-        const newBuild = new Build({ userId, carModel, color, selectedParts });
-        await newBuild.save();
-        res.status(201).json(newBuild);
+        const userId = req.user.id;
+        const buildData = req.body;
+
+        const newBuild = await buildService.createBuild(buildData, userId);
+        res.status(201).json({
+            success: true,
+            message: 'Build created successfully',
+            data: newBuild
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error creating build', error });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error creating build',
+            error: error.message
+        });
     }
 };
 
 // Get all builds
 export const getAllBuilds = async (req, res) => {
     try {
-        const builds = await Build.find();
-        res.status(200).json(builds);
+        const builds = await buildService.getAllBuilds();
+        res.status(200).json({
+            success: true,
+            message: 'Builds retrieved successfully',
+            data: builds,
+            count: builds.length
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching builds', error });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error fetching builds',
+            error: error.message
+        });
     }
 };
 
@@ -27,13 +44,20 @@ export const getAllBuilds = async (req, res) => {
 export const getBuildById = async (req, res) => {
     try {
         const { id } = req.params;
-        const build = await Build.findById(id);
-        if (!build) {
-            return res.status(404).json({ message: 'Build not found' });
-        }
-        res.status(200).json(build);
+        const build = await buildService.getBuildById(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Build retrieved successfully',
+            data: build
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching build', error });
+        const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error fetching build',
+            error: error.message
+        });
     }
 };
 
@@ -41,18 +65,21 @@ export const getBuildById = async (req, res) => {
 export const updateBuild = async (req, res) => {
     try {
         const { id } = req.params;
-        const { carModel, color, selectedParts } = req.body;
-        const updatedBuild = await Build.findByIdAndUpdate(
-            id,
-            { carModel, color, selectedParts },
-            { new: true }
-        );
-        if (!updatedBuild) {
-            return res.status(404).json({ message: 'Build not found' });
-        }
-        res.status(200).json(updatedBuild);
+        const updateData = req.body;
+
+        const updatedBuild = await buildService.updateBuild(id, updateData);
+        res.status(200).json({
+            success: true,
+            message: 'Build updated successfully',
+            data: updatedBuild
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error updating build', error });
+        const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error updating build',
+            error: error.message
+        });
     }
 };
 
@@ -60,26 +87,41 @@ export const updateBuild = async (req, res) => {
 export const deleteBuild = async (req, res) => {
     try {
         const { id } = req.params;
-        const deletedBuild = await Build.findByIdAndDelete(id);
-        if (!deletedBuild) {
-            return res.status(404).json({ message: 'Build not found' });
-        }
-        res.status(200).json({ message: 'Build deleted successfully' });
+        const result = await buildService.deleteBuild(id);
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+            data: null
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error deleting build', error });
+        const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error deleting build',
+            error: error.message
+        });
     }
 };
 
-//Find Builds by User ID
+// Find Builds by User ID
 export const getBuildsByUserId = async (req, res) => {
     try {
         const userId = req.user.id;
-        const builds = await Build.find({ userId });
-        if (!builds || builds.length === 0) {
-            return res.status(404).json({ message: 'No builds found for this user' });
-        }
-        res.status(200).json(builds);
+        const builds = await buildService.getBuildsByUserId(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'User builds retrieved successfully',
+            data: builds,
+            count: builds.length
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching builds', error });
+        const statusCode = error.message.includes('No builds found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error fetching builds',
+            error: error.message
+        });
     }
-}
+};

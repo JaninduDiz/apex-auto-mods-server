@@ -1,108 +1,62 @@
-import User from '../models/user.model.js';
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import * as authService from '../services/auth.service.js';
 
 // Register a new user
-
 export const register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const userData = req.body;
 
-        if (!username || !email || !password)
-            return res
-                .status(400)
-                .json({ msg: "Not all fields have been entered. " });
-
-
-        const existingUser = await User.findOne({ email: email });
-        if (existingUser)
-            return res
-                .status(400)
-                .json({ msg: "An account with this email already exists." });
-
-
-
-        const salt = await bcrypt.genSalt();
-        const passwordHash = await bcrypt.hash(password, salt);
-
-        const newUser = new User({
-            username,
-            email,
-            password: passwordHash
-        });
-
-        const savedUser = await newUser.save();
-
-
-        const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET);
+        const result = await authService.register(userData);
         res.status(200).json({
-            token,
-            user: {
-                id: savedUser._id,
-                username: savedUser.username,
-                email: savedUser.email
-            }
+            success: true,
+            message: 'User registered successfully',
+            data: result
         });
-
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error registering user',
+            error: error.message
+        });
     }
-}
+};
 
-// Login 
-
+// Login
 export const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const loginData = req.body;
 
-        if (!email || !password)
-            return res
-                .status(400)
-                .json({ msg: "Not all fields have been entered. " });
-
-        const user = await User.findOne({ email: email });
-        if (!user)
-            return res
-                .status(400)
-                .json({ msg: "No account with this email has been registered." });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch)
-            return res
-                .status(400)
-                .json({ msg: "Invalid credentials." });
-
-
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+        const result = await authService.login(loginData);
         res.status(200).json({
-            token,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-            }
+            success: true,
+            message: 'User logged in successfully',
+            data: result
         });
-
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error logging in user',
+            error: error.message
+        });
     }
-}
+};
 
-
-// view profile 
-
+// View profile
 export const viewProfile = async (req, res) => {
     try {
-        const user = req.user;
-        const userDetails = await User.findById(user.id).select("-password");
-        if (!userDetails)
-            return res
-                .status(404)
-                .json({ msg: "User not found." });
+        const userId = req.user.id;
 
-        res.status(200).json(userDetails);
+        const userDetails = await authService.viewProfile(userId);
+        res.status(200).json({
+            success: true,
+            message: 'User profile retrieved successfully',
+            data: userDetails
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error fetching user profile',
+            error: error.message
+        });
     }
-}
+};
 

@@ -1,25 +1,42 @@
-import Vehicle from '../models/vehicle.model.js';
+import * as vehicleService from '../services/vehicle.service.js';
 
 // Create a new vehicle
 export const createVehicle = async (req, res) => {
     try {
-        const { make, carModel, color, year, odoRead } = req.body;
         const userId = req.user.id;
-        const newVehicle = new Vehicle({ userId, make, carModel, color, year, odoRead });
-        await newVehicle.save();
-        res.status(201).json(newVehicle);
+        const vehicleData = req.body;
+
+        const newVehicle = await vehicleService.createVehicle(vehicleData, userId);
+        res.status(201).json({
+            success: true,
+            message: 'Vehicle created successfully',
+            data: newVehicle
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error creating vehicle', error });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error creating vehicle',
+            error: error.message
+        });
     }
 };
 
 // Get all vehicles
 export const getAllVehicles = async (req, res) => {
     try {
-        const vehicles = await Vehicle.find();
-        res.status(200).json(vehicles);
+        const vehicles = await vehicleService.getAllVehicles();
+        res.status(200).json({
+            success: true,
+            message: 'Vehicles retrieved successfully',
+            data: vehicles,
+            count: vehicles.length
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching vehicles', error });
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error fetching vehicles',
+            error: error.message
+        });
     }
 };
 
@@ -27,13 +44,20 @@ export const getAllVehicles = async (req, res) => {
 export const getVehicleById = async (req, res) => {
     try {
         const { id } = req.params;
-        const vehicle = await Vehicle.findById(id);
-        if (!vehicle) {
-            return res.status(404).json({ message: 'Vehicle not found' });
-        }
-        res.status(200).json(vehicle);
+        const vehicle = await vehicleService.getVehicleById(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Vehicle retrieved successfully',
+            data: vehicle
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching vehicle', error });
+        const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error fetching vehicle',
+            error: error.message
+        });
     }
 };
 
@@ -41,18 +65,21 @@ export const getVehicleById = async (req, res) => {
 export const updateVehicle = async (req, res) => {
     try {
         const { id } = req.params;
-        const { make, carModel, color, year, odoRead } = req.body;
-        const updatedVehicle = await Vehicle.findByIdAndUpdate(
-            id,
-            { make, carModel, color, year, odoRead },
-            { new: true }
-        );
-        if (!updatedVehicle) {
-            return res.status(404).json({ message: 'Vehicle not found' });
-        }
-        res.status(200).json(updatedVehicle);
+        const updateData = req.body;
+
+        const updatedVehicle = await vehicleService.updateVehicle(id, updateData);
+        res.status(200).json({
+            success: true,
+            message: 'Vehicle updated successfully',
+            data: updatedVehicle
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error updating vehicle', error });
+        const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error updating vehicle',
+            error: error.message
+        });
     }
 };
 
@@ -60,12 +87,41 @@ export const updateVehicle = async (req, res) => {
 export const deleteVehicle = async (req, res) => {
     try {
         const { id } = req.params;
-        const deletedVehicle = await Vehicle.findByIdAndDelete(id);
-        if (!deletedVehicle) {
-            return res.status(404).json({ message: 'Vehicle not found' });
-        }
-        res.status(200).json({ message: 'Vehicle deleted successfully' });
+        const result = await vehicleService.deleteVehicle(id);
+
+        res.status(200).json({
+            success: true,
+            message: result.message,
+            data: null
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error deleting vehicle', error });
+        const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error deleting vehicle',
+            error: error.message
+        });
+    }
+};
+
+// Get vehicles by user ID
+export const getVehiclesByUserId = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const vehicles = await vehicleService.getVehiclesByUserId(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'User vehicles retrieved successfully',
+            data: vehicles,
+            count: vehicles.length
+        });
+    } catch (error) {
+        const statusCode = error.message.includes('No vehicles found') ? 404 : 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message || 'Error fetching vehicles',
+            error: error.message
+        });
     }
 };
