@@ -5,13 +5,14 @@ import * as buildRepository from '../repositories/build.repository.js';
  * @param {Object} buildData - Build data
  * @param {string} buildData.carModel - Car model
  * @param {string} buildData.color - Car color
+ * @param {string} buildData.wheelColor - Wheel color (optional)
  * @param {Array} buildData.selectedParts - Selected parts
  * @param {string} userId - User ID
  * @returns {Promise<Object>} Created build
  */
 export const createBuild = async (buildData, userId) => {
     try {
-        const { carModel, color, selectedParts } = buildData;
+        const { carModel, color, wheelColor, selectedParts } = buildData;
 
         // Validate required fields
         if (!carModel || !color) {
@@ -22,6 +23,7 @@ export const createBuild = async (buildData, userId) => {
             userId,
             carModel,
             color,
+            wheelColor,
             selectedParts: selectedParts || []
         };
 
@@ -79,11 +81,12 @@ export const updateBuild = async (id, updateData) => {
             throw new Error('Build ID is required');
         }
 
-        const { carModel, color, selectedParts } = updateData;
+        const { carModel, color, wheelColor, selectedParts } = updateData;
         const updateFields = {};
 
         if (carModel) updateFields.carModel = carModel;
         if (color) updateFields.color = color;
+        if (wheelColor !== undefined) updateFields.wheelColor = wheelColor;
         if (selectedParts) updateFields.selectedParts = selectedParts;
 
         const updatedBuild = await buildRepository.updateById(id, updateFields);
